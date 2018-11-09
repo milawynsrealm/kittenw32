@@ -27,34 +27,46 @@
 extern "C" {
 #endif
 
+/* Used to determine the OS environment at compile time */
+#define DOS_DEFINE (defined(MSDOS) || defined(__DOS__) || defined(__MSDOS__) || defined(_MSDOS))
+#define W32_DEFINE (defined(_WIN32) || defined(_WIN64) || defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__))
+#define UNIX_DEFINE (!DOS_DEFINE && !W32_DEFINE) /* If not Win32 or DOS, assume it's a UNIX-based environment */
+
+#if UNIX_DEFINE
+#include <nl_types.h>
+#include <unistd.h>
+#endif
+
 /* Data types */
 
 typedef int nl_catd;
 
 /* Functions */
 
-#define catgets(catalog, set,message_number,message) kittengets(set,message_number,message)
-#define catopen(name,flag) kittenopen(name)
-#define catclose(catalog)  kittenclose()
-
-
 char *  kittengets( int set_number, int message_number,char *message);
 nl_catd kittenopen(char *name);
 void    kittenclose (void);
 
+#if !UNIX_DEFINE
+#define catgets(catalog, set,message_number,message) kittengets(set,message_number,message)
+#define catopen(name,flag) kittenopen(name)
+#define catclose(catalog)  kittenclose()
+#endif
+
 int get_line (int file, char *buffer, int size);
 
 int dos_open(char *filename, int mode);
-#define open(filename,mode) dos_open(filename,mode)
-
 int dos_read(int file, void *ptr, unsigned count);
-#define read(file, ptr, count) dos_read(file,ptr,count)
-
 int dos_write(int file, void *ptr, unsigned count);
-#define write(file, ptr, count) dos_write(file,ptr,count)
-
 void dos_close(int file);
+
+
+#if !UNIX_DEFINE
+#define open(filename,mode) dos_open(filename,mode)
+#define read(file, ptr, count) dos_read(file,ptr,count)
+#define write(file, ptr, count) dos_write(file,ptr,count)
 #define close(file) dos_close(file)
+#endif
 
 #ifdef __cplusplus
 }

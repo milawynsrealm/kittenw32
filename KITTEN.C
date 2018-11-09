@@ -72,7 +72,8 @@ char lastcr = 0;    /* for 2byte CR LF sequences     */
 
 int dos_open(char *filename, int mode)
 {
-	union REGS r;
+#if DOS_DEFINE
+    union REGS r;
         struct SREGS s;
 	if (mode);		/* mode ignored - readonly supported */
 	r.h.ah = 0x3d;
@@ -81,12 +82,16 @@ int dos_open(char *filename, int mode)
         s.ds = FP_SEG(filename);
 	intdosx(&r,&r,&s);
 	return ( (r.x.cflag) ? -1 : r.x.ax );
+#else /* W32_DEFINE */
+    return 0;
+#endif
 }
 
 
 int dos_read(int file, void *ptr, unsigned count)
 {
-	union REGS r;
+#if DOS_DEFINE
+    union REGS r;
         struct SREGS s;
 	r.h.ah = 0x3f;
 	r.x.bx = file;
@@ -95,12 +100,16 @@ int dos_read(int file, void *ptr, unsigned count)
         s.ds = FP_SEG(ptr);
 	intdosx(&r,&r,&s);
 	return ( (r.x.cflag) ? 0 : r.x.ax );
+#else  /* W32_DEFINE */
+    return 0;
+#endif
 }
 
 
 int dos_write(int file, void *ptr, unsigned count)
 {
-	union REGS r;
+#if DOS_DEFINE
+    union REGS r;
 	struct SREGS s;
 	r.h.ah = 0x40;
 	r.x.bx = file;
@@ -109,15 +118,22 @@ int dos_write(int file, void *ptr, unsigned count)
         s.ds = FP_SEG(ptr);
 	intdosx(&r,&r,&s);
 	return ( (r.x.cflag) ? 0 : r.x.ax );
+#else /* W32_DEFINE */
+    return 0;
+#endif
 }
 
 
 void dos_close(int file)
 {
-	union REGS r;
+#if DOS_DEFINE
+    union REGS r;
 	r.h.ah = 0x3e;
 	r.x.bx = file;
 	intdos(&r,&r);
+#else /* W32_DEFINE */
+    //...
+#endif
 }
 
 
