@@ -131,8 +131,6 @@ void dos_close(int file)
 	r.h.ah = 0x3e;
 	r.x.bx = file;
 	intdos(&r,&r);
-#else /* W32_DEFINE */
-    //...
 #endif
 }
 
@@ -222,7 +220,14 @@ nl_catd kittenopen(char *name)
 
   /* step through NLSPATH */
 
+#if DOS_DEFINE
   nlsptr = getenv ("NLSPATH");
+#elif W32_DEFINE
+  if (GetCurrentDirectory(MAX_PATH, nlsptr) == 0)
+      return (-1);
+#else
+  #error NLSPATH not supported yet on UNIX.
+#endif
 
   if (nlsptr == NULL) {
       /* printf("no NLSPATH= found\n"); */ /* not fatal either */

@@ -33,8 +33,10 @@ extern "C" {
 #define UNIX_DEFINE (!DOS_DEFINE && !W32_DEFINE) /* If not Win32 or DOS, assume it's a UNIX-based environment */
 
 #if UNIX_DEFINE
-#include <nl_types.h>
-#include <unistd.h>
+    #include <nl_types.h>
+    #include <unistd.h>
+#elif W32_DEFINE
+    #include <io.h>
 #endif
 
 /* Data types */
@@ -62,11 +64,21 @@ void dos_close(int file);
 
 
 #if !UNIX_DEFINE
-#define open(filename,mode) dos_open(filename,mode)
-#define read(file, ptr, count) dos_read(file,ptr,count)
-#define write(file, ptr, count) dos_write(file,ptr,count)
-#define close(file) dos_close(file)
-#endif
+#if DOS_DEFINE
+    #define open(filename,mode) dos_open(filename,mode)
+    #define read(file, ptr, count) dos_read(file,ptr,count)
+    #define write(file, ptr, count) dos_write(file,ptr,count)
+    #define close(file) dos_close(file)
+#elif W32_DEFINE
+#if UNICODE
+    #define open(filename,mode) _wopen(filename,mode)
+#else /* ANSI */
+    #define open(filename,mode) _open(filename,mode))
+#endif /* UNICODE */
+    #define read(file,ptr,count) _read(file,ptr,count)
+    #define write(file,ptr,count) _write(file,ptr,count)
+    #define close(file) _close(file)
+#endif /* DOS_DEFINE */
 
 #ifdef __cplusplus
 }
