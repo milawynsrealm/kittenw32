@@ -57,14 +57,13 @@ void    kittenclose (void);
 
 int get_line (int file, char *buffer, int size);
 
-int dos_open(char *filename, int mode);
-int dos_read(int file, void *ptr, unsigned count);
-int dos_write(int file, void *ptr, unsigned count);
-void dos_close(int file);
-
-
 #if !UNIX_DEFINE
 #if DOS_DEFINE
+    int dos_open(char *filename, int mode);
+    int dos_read(int file, void *ptr, unsigned count);
+    int dos_write(int file, void *ptr, unsigned count);
+    void dos_close(int file);
+
     #define open(filename,mode) dos_open(filename,mode)
     #define read(file, ptr, count) dos_read(file,ptr,count)
     #define write(file, ptr, count) dos_write(file,ptr,count)
