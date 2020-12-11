@@ -30,7 +30,7 @@ extern "C" {
 /* Used to determine the OS environment at compile time */
 #define DOS_DEFINE (defined(MSDOS) || defined(__DOS__) || defined(__MSDOS__) || defined(_MSDOS))
 #define W32_DEFINE (defined(_WIN32) || defined(_WIN64) || defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__))
-#define UNIX_DEFINE (!DOS_DEFINE && !W32_DEFINE) /* If not Win32 or DOS, assume it's a UNIX-based environment */
+#define UNIX_DEFINE (!DOS_DEFINE && !W32_DEFINE) /* If not Win32 or DOS, assume it's a POSIX-based environment */
 
 #if UNIX_DEFINE
     #include <nl_types.h>
@@ -45,14 +45,14 @@ typedef int nl_catd;
 
 /* Functions */
 
-char *  kittengets( int set_number, int message_number,char *message);
+char    *kittengets(int set_number, int message_number,char *message);
 nl_catd kittenopen(char *name);
 void    kittenclose (void);
 
 #if !UNIX_DEFINE
-#define catgets(catalog, set,message_number,message) kittengets(set,message_number,message)
-#define catopen(name,flag) kittenopen(name)
-#define catclose(catalog)  kittenclose()
+    #define catgets(catalog, set,message_number,message) kittengets(set,message_number,message)
+    #define catopen(name,flag) kittenopen(name)
+    #define catclose(catalog)  kittenclose()
 #endif
 
 int get_line (int file, char *buffer, int size);
@@ -69,7 +69,7 @@ void dos_close(int file);
     #define read(file, ptr, count) dos_read(file,ptr,count)
     #define write(file, ptr, count) dos_write(file,ptr,count)
     #define close(file) dos_close(file)
-#elif W32_DEFINE
+#elif W32_DEFINE /* Windows */
 #if UNICODE
     #define open(filename,mode) _wopen(filename,mode)
 #else /* ANSI */

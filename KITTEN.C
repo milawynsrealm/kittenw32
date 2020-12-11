@@ -19,9 +19,9 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
 */
 
-#include <stdio.h>			/* sprintf */
-#include <stdlib.h>			/* getenv  */
-#include <string.h>			/* strchr */
+#include <stdio.h>  /* sprintf */
+#include <stdlib.h> /* getenv  */
+#include <string.h> /* strchr */
 #include <fcntl.h>
 #include <dos.h>
 
@@ -33,20 +33,18 @@
 
 char catcontents[8192];
 
-struct catstring{
-  char key1;
-  char key2;
-  char *text;
+struct catstring {
+    char key1;
+    char key2;
+    char *text;
 };
 
 typedef struct catstring catstring_t;
-
 catstring_t catpoints[128];
 
 
 /* Local prototypes */
-
-int catread (char *catfile);		/* Reads a catfile into the hash */
+int catread (char *catfile);        /* Reads a catfile into the hash */
 char *processEscChars(char *line);  /* Converts c escape sequences to chars */
 
 int get_char(int); /* not meant for external use    */
@@ -57,16 +55,12 @@ int mystrtoul(char *, int, int);
 
 
 /* Globals */
-
-nl_catd _kitten_catalog = 0;	/* _kitten_catalog descriptor or 0 */
-char catfile[128];		/* full path to _kitten_catalog */
-
-char getlbuf[8192]; /* read buffer for better speed  */
-char * getlp;       /* current point in buffer       */
-int getlrem = -1;   /* remaining bytes in buffer     */
-char lastcr = 0;    /* for 2byte CR LF sequences     */
-
-
+nl_catd _kitten_catalog = 0; /* _kitten_catalog descriptor or 0 */
+char catfile[128];             /* full path to _kitten_catalog  */
+char getlbuf[8192];          /* read buffer for better speed    */
+char * getlp;                /* current point in buffer         */
+int getlrem = -1;            /* remaining bytes in buffer       */
+char lastcr = 0;             /* for 2byte CR LF sequences       */
 
 /* DOS handle based file usage */
 
@@ -75,13 +69,13 @@ int dos_open(char *filename, int mode)
 #if DOS_DEFINE
     union REGS r;
         struct SREGS s;
-	if (mode);		/* mode ignored - readonly supported */
-	r.h.ah = 0x3d;
-	r.h.al = 0;		/* read mode only supoported now !! */
-	r.x.dx = FP_OFF(filename);
+    if (mode);        /* mode ignored - readonly supported */
+    r.h.ah = 0x3d;
+    r.h.al = 0;        /* read mode only supoported now !! */
+    r.x.dx = FP_OFF(filename);
         s.ds = FP_SEG(filename);
-	intdosx(&r,&r,&s);
-	return ( (r.x.cflag) ? -1 : r.x.ax );
+    intdosx(&r,&r,&s);
+    return ( (r.x.cflag) ? -1 : r.x.ax );
 #else /* W32_DEFINE */
     return 0;
 #endif
@@ -93,14 +87,14 @@ int dos_read(int file, void *ptr, unsigned count)
 #if DOS_DEFINE
     union REGS r;
         struct SREGS s;
-	r.h.ah = 0x3f;
-	r.x.bx = file;
-	r.x.cx = count;
-	r.x.dx = FP_OFF(ptr);
+    r.h.ah = 0x3f;
+    r.x.bx = file;
+    r.x.cx = count;
+    r.x.dx = FP_OFF(ptr);
         s.ds = FP_SEG(ptr);
-	intdosx(&r,&r,&s);
-	return ( (r.x.cflag) ? 0 : r.x.ax );
-#else  /* W32_DEFINE */
+    intdosx(&r,&r,&s);
+    return ( (r.x.cflag) ? 0 : r.x.ax );
+#else /* W32_DEFINE */
     return 0;
 #endif
 }
@@ -110,14 +104,14 @@ int dos_write(int file, void *ptr, unsigned count)
 {
 #if DOS_DEFINE
     union REGS r;
-	struct SREGS s;
-	r.h.ah = 0x40;
-	r.x.bx = file;
-	r.x.cx = count;
-	r.x.dx = FP_OFF(ptr);
+    struct SREGS s;
+    r.h.ah = 0x40;
+    r.x.bx = file;
+    r.x.cx = count;
+    r.x.dx = FP_OFF(ptr);
         s.ds = FP_SEG(ptr);
-	intdosx(&r,&r,&s);
-	return ( (r.x.cflag) ? 0 : r.x.ax );
+    intdosx(&r,&r,&s);
+    return ( (r.x.cflag) ? 0 : r.x.ax );
 #else /* W32_DEFINE */
     return 0;
 #endif
@@ -128,9 +122,9 @@ void dos_close(int file)
 {
 #if DOS_DEFINE
     union REGS r;
-	r.h.ah = 0x3e;
-	r.x.bx = file;
-	intdos(&r,&r);
+    r.h.ah = 0x3e;
+    r.x.bx = file;
+    intdos(&r,&r);
 #endif
 }
 
@@ -143,23 +137,22 @@ void dos_close(int file)
  * On failure, catgets() returns the value 'message'.
  */
 
-char * kittengets(int setnum, int msgnum, char * message)
+char *kittengets(int setnum, int msgnum, char * message)
 {
-
-  int i = 0;
+    int i = 0;
   
-  while ((catpoints[i].key1 != setnum) || (catpoints[i].key2 != msgnum)) {
-    if ((catpoints[i].text == NULL) || (i>127)) /* at EOF */
-      return message;
-    i++;
-  }
+    while ((catpoints[i].key1 != setnum) || (catpoints[i].key2 != msgnum))
+    {
+        if ((catpoints[i].text == NULL) || (i>127)) /* at EOF */
+            return message;
+        i++;
+    }
 
-  if (catpoints[i].text == NULL)
-    return message;
-  else
-    return (catpoints[i].text);
+    if (catpoints[i].text == NULL)
+        return message;
+    else
+        return (catpoints[i].text);
 }
-
 
 /**
  * Initialize kitten for program (name).
@@ -167,94 +160,102 @@ char * kittengets(int setnum, int msgnum, char * message)
 
 nl_catd kittenopen(char *name)
 {
-  /* catopen() returns a message _kitten_catalog descriptor  *
-   * of type nl_catd on success.  On failure, it returns -1. */
+    /* catopen() returns a message _kitten_catalog descriptor  *
+    * of type nl_catd on success.  On failure, it returns -1. */
 
-  char catlang[3];			/* from LANG environment var. */
-  char *nlsptr;				/* ptr to NLSPATH */
-  char *lang;                           /* ptr to LANG */
-  int i;
+    char catlang[3]; /* from LANG environment var. */
+    char *nlsptr;    /* ptr to NLSPATH */
+    char *lang;      /* ptr to LANG */
+    int i;
   
-  /* Open the _kitten_catalog file */
-  /* The value of `_kitten_catalog' will be set based on catread */
+    /* Open the _kitten_catalog file */
+    /* The value of `_kitten_catalog' will be set based on catread */
 
-  if (_kitten_catalog) { /* Already one open */
-    write(1,"cat already open\r\n",strlen("cat already open\r\n"));
-    return (-1);
-  }
+    if (_kitten_catalog) /* Already one open */
+    {
+        write(1,"cat already open\r\n",strlen("cat already open\r\n"));
+        return (-1);
+    }
 
-  for (i=0; i<128; i++)
-    catpoints[i].text = NULL;
+    for (i=0; i<128; i++)
+        catpoints[i].text = NULL;
 
-  if (strchr (name, '\\')) {
-    /* unusual case: 'name' is a filename */
-    write(1,"found \\\r\n",9);
-    _kitten_catalog = catread (name);
-    if (_kitten_catalog)
-      return (_kitten_catalog);
-  }
+    if (strchr (name, '\\'))
+    {
+        /* unusual case: 'name' is a filename */
+        write(1,"found \\\r\n",9);
+        _kitten_catalog = catread(name);
 
-  /* If the message _kitten_catalog file name does not contain a directory *
-   * separator, then we need to try to locate the message _kitten_catalog. */
+        if (_kitten_catalog)
+            return (_kitten_catalog);
+    }
 
-  /* We will need the value of LANG, and may need a 2-letter abbrev of
-     LANG later on, so get it now. */
+    /* If the message _kitten_catalog file name does not contain a directory *
+     * separator, then we need to try to locate the message _kitten_catalog. */
 
-  lang = getenv ("LANG");
+    /* We will need the value of LANG, and may need a 2-letter abbrev of
+       LANG later on, so get it now. */
 
-  if (lang == NULL) {
-      /* printf("no lang= found\n"); */ /* not fatal, though */
-      /* Return failure - we won't be able to locate the cat file */
-      return (-1);
-  }
+    lang = getenv ("LANG");
 
-  if ( ( strlen(lang) < 2 ) ||
-       ( (strlen(lang) > 2) && (lang[2] != '-') ) ) {
-      /* Return failure - we won't be able to locate the cat file */
-      return (-1);
-  }
+    if (lang == NULL)
+    {
+        /* printf("no lang= found\n"); */ /* not fatal, though */
+        /* Return failure - we won't be able to locate the cat file */
+        return (-1);
+    }
 
-  memcpy(catlang, lang, 2);
-  /* we copy the full LANG value or the part before "-" if "-" found */
-  catlang[2] = '\0';
+    if ((strlen(lang) < 2 ) ||
+       ((strlen(lang) > 2) && (lang[2] != '-') ) )
+    {
+        /* Return failure - we won't be able to locate the cat file */
+        return (-1);
+    }
 
-  /* step through NLSPATH */
+    memcpy(catlang, lang, 2);
+    /* we copy the full LANG value or the part before "-" if "-" found */
+    catlang[2] = '\0';
+
+    /* step through NLSPATH */
 
 #if DOS_DEFINE
-  nlsptr = getenv ("NLSPATH");
+    nlsptr = getenv ("NLSPATH");
 #elif W32_DEFINE
-  if (GetCurrentDirectory(MAX_PATH, nlsptr) == 0)
-      return (-1);
+    if (GetCurrentDirectory(MAX_PATH, nlsptr) == 0)
+        return (-1);
 #else
-  #error NLSPATH not supported yet on UNIX.
+    #error NLSPATH not supported yet on UNIX.
 #endif
 
-  if (nlsptr == NULL) {
-      /* printf("no NLSPATH= found\n"); */ /* not fatal either */
-      /* Return failure - we won't be able to locate the cat file */
-      return (-1);
-   }
+    if (nlsptr == NULL)
+    {
+        /* printf("no NLSPATH= found\n"); */ /* not fatal either */
+        /* Return failure - we won't be able to locate the cat file */
+        return (-1);
+    }
 
-  catfile[0] = '\0';
+    catfile[0] = '\0';
 
-  while (nlsptr != NULL) {
-      char *tok = strchr(nlsptr, ';');
-      int toklen;
+    while (nlsptr != NULL)
+    {
+        char *tok = strchr(nlsptr, ';');
+        int toklen;
 
-      if (tok == NULL)
-        toklen = strlen(nlsptr); /* last segment */
-      else
-        toklen = tok - nlsptr; /* segment terminated by ';' */
+        if (tok == NULL)
+            toklen = strlen(nlsptr); /* last segment */
+        else
+            toklen = tok - nlsptr; /* segment terminated by ';' */
       
-      /* catfile = malloc(toklen+1+strlen(name)+1+strlen(lang)+1); */
-      /* Try to find the _kitten_catalog file in each path from NLSPATH */
+        /* catfile = malloc(toklen+1+strlen(name)+1+strlen(lang)+1); */
+        /* Try to find the _kitten_catalog file in each path from NLSPATH */
 
-      if ((toklen+6+strlen(name)) > sizeof(catfile)) {
-        write(1,"NLSPATH overflow\r\n",strlen("NLSPATH overflow\r\n"));
-        return 0; /* overflow in NLSPATH, should never happen */
-      }
+        if ((toklen+6+strlen(name)) > sizeof(catfile))
+        {
+            write(1,"NLSPATH overflow\r\n",strlen("NLSPATH overflow\r\n"));
+            return 0; /* overflow in NLSPATH, should never happen */
+        }
 
-      /* Rule #1: %NLSPATH%\%LANG%\cat */
+        /* Rule #1: %NLSPATH%\%LANG%\cat */
 
         memcpy(catfile, nlsptr, toklen);
         strcpy(catfile+toklen,"\\");
@@ -262,10 +263,11 @@ nl_catd kittenopen(char *name)
         strcat(catfile,"\\");
         strcat(catfile,name);
         _kitten_catalog = catread (catfile);
-        if (_kitten_catalog)
-	  return (_kitten_catalog);
 
-      /* Rule #2: %NLSPATH%\cat.%LANG% */
+        if (_kitten_catalog)
+            return (_kitten_catalog);
+
+        /* Rule #2: %NLSPATH%\cat.%LANG% */
 
         /* memcpy(catfile, nlsptr, toklen); */
         strcpy(catfile+toklen,"\\");
@@ -273,102 +275,113 @@ nl_catd kittenopen(char *name)
         strcat(catfile,".");
         strcat(catfile,catlang);
         _kitten_catalog = catread (catfile);
-        if (_kitten_catalog)
-	  return (_kitten_catalog);
 
-      /* Grab next tok for the next while iteration */
+        if (_kitten_catalog)
+            return (_kitten_catalog);
+
+        /* Grab next tok for the next while iteration */
 
         nlsptr = tok;
         if (nlsptr) nlsptr++;
-      
+
     } /* while tok */
 
-  /* We could not find it.  Return failure. */
+    /* We could not find it.  Return failure. */
 
-  return (-1);
+    return (-1);
 }
-
 
 /**
  * Load a message catalog into memory.
  */
-
-int catread (char *catfile)
+int catread(char *catfile)
 {
-  int   file;				/* pointer to the catfile */
-  int   i;
-  char  *where;
-  char  *tok;
+    int  file; /* pointer to the catfile */
+    int  i;
+    char *where;
+    char *tok;
 
-  /* Get the whole catfile into a buffer and parse it */
-  
-  file = open (catfile, O_RDONLY | O_TEXT);
-  if (file < 0) 
-      /* Cannot open the file.  Return failure */
-      return 0;
+    /* Get the whole catfile into a buffer and parse it */
 
-  for (i=0; i<128; i++)
-    catpoints[i].text = NULL;
+    file = open (catfile, O_RDONLY | O_TEXT);
 
-  for (i=0; i<sizeof(catcontents); i++)
-    catcontents[i] = '\0';
+    /* Cannot open the file.  Return failure */
+    if (file < 0)
+        return 0;
 
-  /* Read the file into memory */
-  i = read (file, catcontents, sizeof(catcontents)-1);
+    for (i=0; i<128; i++)
+        catpoints[i].text = NULL;
 
-  if ((i == sizeof(catcontents)-1) || (i < 1))
-      return 0; /* file was too big or too small */
+    for (i=0; i<sizeof(catcontents); i++)
+        catcontents[i] = '\0';
 
-  where = catcontents;
-  i = 0; /* catpoints entry */
+    /* Read the file into memory */
+    i = read (file, catcontents, sizeof(catcontents)-1);
 
-  do {
-    char *msg;
-    char *key;
-    int key1 = 0;
-    int key2 = 0;
+    if ((i == sizeof(catcontents)-1) || (i < 1))
+        return 0; /* file was too big or too small */
 
-    tok = strchr(where, '\n');
+    where = catcontents;
+    i = 0; /* catpoints entry */
 
-    if (tok == NULL) { /* done? */
-      close(file);
-      return 1; /* success */
-    }
+    do
+    {
+        char *msg;
+        char *key;
+        int key1 = 0;
+        int key2 = 0;
 
-    tok[0] = '\0'; /* terminate here */ 
-    tok--; /* guess: \r before \n */
-    if (tok[0] != '\r')
-      tok++; /* if not, go back */
-    else {
-      tok[0] = '\0'; /* terminate here already */
-      tok++;
-    }
-    tok++; /* this is where the next line starts */
+        tok = strchr(where, '\n');
 
-    if ( (where[0] >= '0') && (where[0] <= '9') &&
-         ( (msg = strchr(where,':')) != NULL) ) {
-      /* Skip everything which starts with # or with no digit */
-      /* Entries look like "1.2:This is a message" */
+        /* done? */
+        if (tok == NULL)
+        {
+            close(file);
+            return 1; /* success */
+        }
 
-      msg[0] = '\0'; /* remove : */
-      msg++; /* go past the : */
+        tok[0] = '\0'; /* terminate here */ 
+        tok--; /* guess: \r before \n */
 
-      if ((key = strchr (where, '.')) != NULL)	{
-        key[0] = '\0'; /* turn . into terminator */
-        key++; /* go past the . */
-        key1 = mystrtoul(where, 10, strlen(where));
-        key2 = mystrtoul(key, 10, strlen(key));
+        if (tok[0] != '\r')
+            tok++; /* if not, go back */
+        else
+        {
+            tok[0] = '\0'; /* terminate here already */
+            tok++;
+        }
+        tok++; /* this is where the next line starts */
 
-        if ((key1 >= 0) && (key2 >= 0)) {
-          catpoints[i].key1 = key1;
-          catpoints[i].key2 = key2;
-          catpoints[i].text = processEscChars(msg);
-          if (catpoints[i].text == NULL) /* ESC parse error */
-	    catpoints[i].text = msg;
-          i++; /* next entry! */
-        } /* valid keys */
+        if ((where[0] >= '0') && (where[0] <= '9') &&
+            ((msg = strchr(where,':')) != NULL))
+        {
+            /* Skip everything which starts with # or with no digit */
+            /* Entries look like "1.2:This is a message" */
 
-      } /* . found */
+            msg[0] = '\0'; /* remove : */
+            msg++; /* go past the : */
+
+            if ((key = strchr (where, '.')) != NULL)
+            {
+                key[0] = '\0'; /* turn . into terminator */
+                key++; /* go past the . */
+                key1 = mystrtoul(where, 10, strlen(where));
+                key2 = mystrtoul(key, 10, strlen(key));
+
+            if ((key1 >= 0) && (key2 >= 0))
+            {
+                catpoints[i].key1 = key1;
+                catpoints[i].key2 = key2;
+                catpoints[i].text = processEscChars(msg);
+
+                /* ESC parse error */
+                if (catpoints[i].text == NULL)
+                    catpoints[i].text = msg;
+
+                i++; /* next entry! */
+            } /* valid keys */
+
+        } /* . found */
 
     } /* : and digit found */
 
@@ -378,10 +391,10 @@ int catread (char *catfile)
 }
 
 
-void kittenclose (void)
+void kittenclose(void)
 {
-  /* close a message _kitten_catalog */
-  _kitten_catalog = 0;
+    /* close a message _kitten_catalog */
+    _kitten_catalog = 0;
 }
 
 
@@ -390,34 +403,34 @@ void kittenclose (void)
  * Returns -1 if an error is found. The first size
  * chars of the string are parsed.
  */
-
 int mystrtoul(char *src, int base, int size)
 {
-	int ret = 0;
-	
-	for (; size > 0; size--)  {
-	  int digit;
-	  int ch = *src;
-          src++;
+    int ret = 0;
 
-	  if (ch >= '0' && ch <= '9')
-	    digit = ch - '0';
-	  else if (ch >= 'A' && ch <= 'Z')
+    for (; size > 0; size--) 
+    {
+        int digit;
+        int ch = *src;
+
+        src++;
+
+        if (ch >= '0' && ch <= '9')
+            digit = ch - '0';
+        else if (ch >= 'A' && ch <= 'Z')
             digit = ch - 'A' + 10;
-	  else if (ch >= 'a' && ch <= 'z')
+        else if (ch >= 'a' && ch <= 'z')
             digit = ch - 'a' + 10;
-	  else
-	    return -1;
+        else
+            return -1;
 
-          if (digit >= base)
-  	    return -1;
-	  
-	  ret = ret * base + digit;
-	} /* for */
+        if (digit >= base)
+            return -1;
 
-	return ret;
-}		  	  	
-	  	
+        ret = ret * base + digit;
+    } /* for */
+
+    return ret;
+}
 
 /**
  * Process strings, converting \n, \t, \v, \b, \r, \f, \\,
@@ -430,120 +443,145 @@ int mystrtoul(char *src, int base, int size)
 
 char *processEscChars(char *line)
 {
-  char *src = line;
-  char *dst = line; /* possible as dst is shorter than src */
+    char *src = line;
+    char *dst = line; /* possible as dst is shorter than src */
 
-  /* used when converting \xdd and \ddd (hex or octal) characters */
-  char ch;
+    /* used when converting \xdd and \ddd (hex or octal) characters */
+    char ch;
 
-  if (line == NULL)
-    return line;
+    if (line == NULL)
+        return line;
 
-  /* cycle through copying characters, except when a \ is encountered. */
-  while (*src != '\0') {
-    ch = *src;
-    src++;
-    
-    if (ch == '\\') {
-      ch = *src; /* what follows slash? */
-      src++;
-
-      switch (ch) {
-        case '\\': /* a single slash */
-	  *dst = '\\';
-	  dst++;
-	  break;
-        case 'n': /* a newline (linefeed) */
-	  *dst = '\n';
-	  dst++;
-	  break;
-        case 'r': /* a carriage return */
-	  *dst = '\r';
-	  dst++;
-	  break;
-        case 't': /* a horizontal tab */
-	  *dst = '\t';
-	  dst++;
-	  break;
-        case 'v': /* a vertical tab */
-          *dst = '\v';
-          dst++;
-          break;
-        case 'b': /* a backspace */
-          *dst = '\b';
-          dst++;
-          break;
-        case 'a': /* alert */
-          *dst = '\a';
-          dst++;
-          break;
-        case 'f': /* formfeed */
-          *dst = '\f';
-          dst++;
-          break;
-        case 'x': /* extension supporting hex numbers \xdd or \x0dd */
-          {
-            int chx = mystrtoul(src, 16, 2); /* get value */
-            if (chx >= 0) { /* store character */
-	       *dst = chx;
-	       dst++;
-               src += 2;
-            } else /* error so just store x (loose slash) */
-            {
-              *dst = *src;
-              dst++;
-            }
-          }
-          break;
-        default: /* just store letter (loose slash) or handle octal */
-	  {
-            int chx = mystrtoul(src, 8, 3); /* get value */
-            if (chx >= 0) {/* store character */
-	       *dst = chx;
-	       dst++;
-               src += 3;
-            } else
-            {
-               *dst = *src;
-               dst++;
-            }
-	  }
-	  break;
-      } /* switch */
-    } /* if backslash */
-      else
+    /* cycle through copying characters, except when a \ is encountered. */
+    while (*src != '\0')
     {
-      *dst = ch;
-      dst++;
-    }
-  } /* while */
+        ch = *src;
+        src++;
+    
+        if (ch == '\\')
+        {
+            ch = *src; /* what follows slash? */
+            src++;
 
-  /* ensure '\0' terminated */
-  *dst = '\0';
+            switch (ch)
+            {
+                case '\\': /* a single slash */
+                    *dst = '\\';
+                    dst++;
+                    break;
 
-  return line;
+                case 'n': /* a newline (linefeed) */
+                    *dst = '\n';
+                    dst++;
+                    break;
+
+                case 'r': /* a carriage return */
+                    *dst = '\r';
+                    dst++;
+                    break;
+
+                case 't': /* a horizontal tab */
+                    *dst = '\t';
+                    dst++;
+                    break;
+
+                case 'v': /* a vertical tab */
+                    *dst = '\v';
+                    dst++;
+                    break;
+
+                case 'b': /* a backspace */
+                    *dst = '\b';
+                    dst++;
+                    break;
+
+                case 'a': /* alert */
+                    *dst = '\a';
+                    dst++;
+                    break;
+
+                case 'f': /* formfeed */
+                    *dst = '\f';
+                    dst++;
+                    break;
+
+                case 'x': /* extension supporting hex numbers \xdd or \x0dd */
+                {
+                    int chx = mystrtoul(src, 16, 2); /* get value */
+
+                    /* store character */
+                    if (chx >= 0)
+                    {
+                        *dst = chx;
+                        dst++;
+                        src += 2;
+                    }
+                    else /* error so just store x (loose slash) */
+                    {
+                        *dst = *src;
+                        dst++;
+                    }
+                    break;
+                }
+
+                default: /* just store letter (loose slash) or handle octal */
+                {
+                    int chx = mystrtoul(src, 8, 3); /* get value */
+
+                    /* store character */
+                    if (chx >= 0)
+                    {
+                        *dst = chx;
+                        dst++;
+                        src += 3;
+                    }
+                    else
+                    {
+                        *dst = *src;
+                        dst++;
+                    }
+                    break;
+                }
+            } /* switch */
+        } /* if backslash */
+        else
+        {
+            *dst = ch;
+            dst++;
+        }
+    } /* while */
+
+    /* ensure '\0' terminated */
+    *dst = '\0';
+
+    return line;
 }
 
+int get_char(int file)
+{
+    int rval = -1;
 
-int get_char(int file) {
-  int rval = -1;
-
-  if (getlrem <= 0) { /* (re)init buffer */
-    getlrem = read(file, getlbuf, sizeof(getlbuf));
+    /* (re)init buffer */
     if (getlrem <= 0)
-      return -1; /* fail: read error / EOF */
-    getlp = getlbuf; /* init pointer */
-  }
+    {
+        getlrem = read(file, getlbuf, sizeof(getlbuf));
 
-  if (getlrem > 0) { /* consume byte from buffer */
-    rval = getlp[0];
-    getlp++;
-    getlrem--;
-  }
+        if (getlrem <= 0)
+            return -1; /* fail: read error / EOF */
 
-  return rval;
+        getlp = getlbuf; /* init pointer */
+    }
+
+    /* consume byte from buffer */
+    if (getlrem > 0)
+    {
+        rval = getlp[0];
+        getlp++;
+        getlrem--;
+    }
+
+    return rval;
 }
-
 
 /**
  * Read a line of text from file. You must call this with
@@ -551,44 +589,48 @@ int get_char(int file) {
  * done with a file before using it on the next file. Cannot
  * be used for 2 files at the same time.
  */
-
-int get_line (int file, char *str, int size)
+int get_line(int file, char *str, int size)
 {
-  int success = 0;
-  int ch;
+    int success = 0;
+    int ch;
 
-  if ((size == 0) || (str == NULL)) { /* re-init get_line buffers */
-    getlp = getlbuf;
-    getlrem = -1;
-    lastcr = 0;
-    return 0;
-  }
-
-  str[0] = '\0';
-
-  while ( (size > 0) && (success == 0) ) {
-    ch = get_char (file);
-    if (ch < 0)
-      break; /* (can cause fail if no \n found yet) */
-
-    if (ch == '\r')
-      ch = get_char (file); /* ignore \r */
-
-    str[0] = ch;
-
-    if ( (ch == '\n') || (ch == '\r') ) { /* done? */
-      str[0] = '\0';
-      return 1; /* success */
+    /* re-init get_line buffers */
+    if ((size == 0) || (str == NULL))
+    {
+        getlp = getlbuf;
+        getlrem = -1;
+        lastcr = 0;
+        return 0;
     }
 
-    str++;
-    size--;
+    str[0] = '\0';
 
-  } /* while */
+    while ( (size > 0) && (success == 0) )
+    {
+        ch = get_char (file);
 
-  str[0] = '\0'; /* terminate buffer */
+        if (ch < 0)
+            break; /* (can cause fail if no \n found yet) */
 
-  return success;
+        if (ch == '\r')
+            ch = get_char (file); /* ignore \r */
+
+        str[0] = ch;
+
+        /* done? */
+        if ( (ch == '\n') || (ch == '\r') )
+        {
+            str[0] = '\0';
+            return 1; /* success */
+        }
+
+        str++;
+        size--;
+
+    } /* while */
+
+    str[0] = '\0'; /* terminate buffer */
+
+    return success;
 
 }
-
